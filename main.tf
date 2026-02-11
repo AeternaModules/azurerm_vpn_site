@@ -11,7 +11,7 @@ resource "azurerm_vpn_site" "vpn_sites" {
   tags                = each.value.tags
 
   dynamic "link" {
-    for_each = each.value.link != null ? [each.value.link] : []
+    for_each = each.value.link != null ? each.value.link : []
     content {
       dynamic "bgp" {
         for_each = link.value.bgp != null ? [link.value.bgp] : []

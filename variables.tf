@@ -36,7 +36,7 @@ EOT
     device_model        = optional(string)
     device_vendor       = optional(string)
     tags                = optional(map(string))
-    link = optional(object({
+    link = optional(list(object({
       bgp = optional(object({
         asn             = number
         peering_address = string
@@ -45,15 +45,23 @@ EOT
       ip_address    = optional(string)
       name          = string
       provider_name = optional(string)
-      speed_in_mbps = optional(number, 0)
-    }))
+      speed_in_mbps = optional(number) # Default: 0
+    })))
     o365_policy = optional(object({
       traffic_category = optional(object({
-        allow_endpoint_enabled    = optional(bool, false)
-        default_endpoint_enabled  = optional(bool, false)
-        optimize_endpoint_enabled = optional(bool, false)
+        allow_endpoint_enabled    = optional(bool) # Default: false
+        default_endpoint_enabled  = optional(bool) # Default: false
+        optimize_endpoint_enabled = optional(bool) # Default: false
       }))
     }))
   }))
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        v.link == null || (length(v.link) >= 1)
+      )
+    ])
+    error_message = "Each link list must contain at least 1 items"
+  }
 }
 
