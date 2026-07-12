@@ -1,3 +1,7 @@
+output "vpn_sites_id" {
+  description = "Map of id values across all vpn_sites, keyed the same as var.vpn_sites"
+  value       = { for k, v in azurerm_vpn_site.vpn_sites : k => v.id }
+}
 output "vpn_sites_address_cidrs" {
   description = "Map of address_cidrs values across all vpn_sites, keyed the same as var.vpn_sites"
   value       = { for k, v in azurerm_vpn_site.vpn_sites : k => v.address_cidrs }
