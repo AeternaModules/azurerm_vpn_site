@@ -55,72 +55,94 @@ EOT
       }))
     }))
   }))
-  # --- Unconfirmed validation candidates, derived from azurerm_vpn_site's provider source ---
-  # Not auto-enabled: either a bespoke provider validator we can't safely translate,
-  # or a path that crosses a list-typed block (needs its own for_each wrapping).
-  # Review, translate into a real validation{} block above, and delete once confirmed.
-  # path: name
-  #   source:    validate.VpnSiteName: no recognizable `if ... { errors = append(...) }` pattern - read it by hand
-  # path: resource_group_name
-  #   condition: length(value) <= 90
-  #   message:   [from resourcegroups.ValidateName: invalid when len(value) > 90]
-  #   source:    [from resourcegroups.ValidateName: invalid when len(value) > 90]
-  # path: resource_group_name
-  #   condition: !endswith(value, ".")
-  #   message:   [from resourcegroups.ValidateName: must not end with "."]
-  #   source:    [from resourcegroups.ValidateName: must not end with "."]
-  # path: resource_group_name
-  #   condition: length(value) != 0
-  #   message:   [from resourcegroups.ValidateName: invalid when len(value) == 0]
-  #   source:    [from resourcegroups.ValidateName: invalid when len(value) == 0]
-  # path: resource_group_name
-  #   source:    [from resourcegroups.ValidateName] !matched
-  # path: location
-  #   source:    location.EnhancedValidate: no recognizable `if ... { errors = append(...) }` pattern - read it by hand
-  # path: virtual_wan_id
-  #   source:    [from virtualwans.ValidateVirtualWANID] !ok
-  # path: virtual_wan_id
-  #   source:    [from virtualwans.ValidateVirtualWANID] err != nil
-  # path: address_cidrs[*]
-  #   source:    validation.IsCIDR(...) - no translation rule yet, add one
-  # path: device_vendor
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: device_model
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: link.name
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: link.provider_name
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: link.speed_in_mbps
-  #   condition: value >= 0
-  #   message:   must be at least 0
-  # path: link.ip_address
-  #   source:    validation.IsIPAddress(...) - no translation rule yet, add one
-  # path: link.fqdn
-  #   condition: length(value) > 0
-  #   message:   must not be empty
-  # path: link.bgp.asn
-  #   condition: value >= 1
-  #   message:   must be at least 1
-  # path: link.bgp.peering_address
-  #   source:    validation.IsIPAddress(...) - no translation rule yet, add one
-  # path: tags
-  #   condition: length(value) <= 50
-  #   message:   [from tags.Validate: invalid when len(value) > 50]
-  #   source:    [from tags.Validate: invalid when len(value) > 50]
-  # path: tags
-  #   condition: length(value) <= 512
-  #   message:   [from tags.Validate: invalid when len(value) > 512]
-  #   source:    [from tags.Validate: invalid when len(value) > 512]
-  # path: tags
-  #   source:    [from tags.Validate] err != nil
-  # path: tags
-  #   condition: length(value) <= 256
-  #   message:   [from tags.Validate: invalid when len(value) > 256]
-  #   source:    [from tags.Validate: invalid when len(value) > 256]
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        length(v.resource_group_name) <= 90
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: invalid when len(value) > 90]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        !endswith(v.resource_group_name, ".")
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: must not end with \".\"]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        length(v.resource_group_name) != 0
+      )
+    ])
+    error_message = "[from resourcegroups.ValidateName: invalid when len(value) == 0]"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        v.device_vendor == null || (length(v.device_vendor) > 0)
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        v.device_model == null || (length(v.device_model) > 0)
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        v.link == null || alltrue([for item in v.link : (length(item.name) > 0)])
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        v.link == null || alltrue([for item in v.link : (item.provider_name == null || (length(item.provider_name) > 0))])
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        v.link == null || alltrue([for item in v.link : (item.speed_in_mbps == null || (item.speed_in_mbps >= 0))])
+      )
+    ])
+    error_message = "must be at least 0"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        v.link == null || alltrue([for item in v.link : (item.fqdn == null || (length(item.fqdn) > 0))])
+      )
+    ])
+    error_message = "must not be empty"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        v.link == null || alltrue([for item in v.link : (item.bgp == null || (item.bgp.asn >= 1))])
+      )
+    ])
+    error_message = "must be at least 1"
+  }
+  validation {
+    condition = alltrue([
+      for k, v in var.vpn_sites : (
+        v.tags == null || (length(v.tags) <= 50)
+      )
+    ])
+    error_message = "[from tags.Validate: invalid when len(value) > 50]"
+  }
+  # Note: 11 additional provider-side validators are enforced at apply time but not mirrored as validation{} blocks here (bespoke or non-mechanically-translatable).
 }
 
