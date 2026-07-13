@@ -45,40 +45,16 @@ EOT
       ip_address    = optional(string)
       name          = string
       provider_name = optional(string)
-      speed_in_mbps = optional(number) # Default: 0
+      speed_in_mbps = optional(number)
     })))
     o365_policy = optional(object({
       traffic_category = optional(object({
-        allow_endpoint_enabled    = optional(bool) # Default: false
-        default_endpoint_enabled  = optional(bool) # Default: false
-        optimize_endpoint_enabled = optional(bool) # Default: false
+        allow_endpoint_enabled    = optional(bool)
+        default_endpoint_enabled  = optional(bool)
+        optimize_endpoint_enabled = optional(bool)
       }))
     }))
   }))
-  validation {
-    condition = alltrue([
-      for k, v in var.vpn_sites : (
-        v.link == null || (length(v.link) >= 1)
-      )
-    ])
-    error_message = "Each link list must contain at least 1 items"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.vpn_sites : (
-        v.device_vendor == null || (length(v.device_vendor) > 0)
-      )
-    ])
-    error_message = "must not be empty"
-  }
-  validation {
-    condition = alltrue([
-      for k, v in var.vpn_sites : (
-        v.device_model == null || (length(v.device_model) > 0)
-      )
-    ])
-    error_message = "must not be empty"
-  }
   # --- Unconfirmed validation candidates, derived from azurerm_vpn_site's provider source ---
   # Not auto-enabled: either a bespoke provider validator we can't safely translate,
   # or a path that crosses a list-typed block (needs its own for_each wrapping).
@@ -107,6 +83,12 @@ EOT
   #   source:    [from virtualwans.ValidateVirtualWANID] err != nil
   # path: address_cidrs[*]
   #   source:    validation.IsCIDR(...) - no translation rule yet, add one
+  # path: device_vendor
+  #   condition: length(value) > 0
+  #   message:   must not be empty
+  # path: device_model
+  #   condition: length(value) > 0
+  #   message:   must not be empty
   # path: link.name
   #   condition: length(value) > 0
   #   message:   must not be empty
