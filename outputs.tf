@@ -28,7 +28,7 @@ output "vpn_sites_name" {
 }
 output "vpn_sites_o365_policy" {
   description = "Map of o365_policy values across all vpn_sites, keyed the same as var.vpn_sites"
-  value       = { for k, v in azurerm_vpn_site.vpn_sites : k => v.o365_policy if v.o365_policy != null && length(v.o365_policy) > 0 }
+  value       = { for k, v in azurerm_vpn_site.vpn_sites : k => one(v.o365_policy) if v.o365_policy != null && length(v.o365_policy) > 0 }
 }
 output "vpn_sites_resource_group_name" {
   description = "Map of resource_group_name values across all vpn_sites, keyed the same as var.vpn_sites"
